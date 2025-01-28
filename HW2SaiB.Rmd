@@ -1,0 +1,204 @@
+---
+title: "HW2SaiB (sb67459)"
+author: "Saisarath Bolneni"
+date: "2025-01-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+profs <- read_csv("profs.csv")
+bikeshare <- read.csv("bikeshare.csv")
+capmetro_UT <- read.csv("capmetro_UT.csv")
+billboard <- read.csv("billboard.csv")
+```
+
+## Problem 1: Beauty, or not, in the classroom
+
+### Part A
+
+```{r}
+ggplot(profs, aes(x=eval)) + labs(x="Course Evaluation Scores",title = "Distribution of Course Evaluation Scores", y = "Frequency") +  geom_histogram(bins=20)
+```
+
+**Caption**: The graph represents the frequency of the course evaluation scores through the responses given.
+
+**Summary**: Through the graph we can see most of the scores is situated between the 3.5 to 4.5 ranges of value. You can see there are a few outliers from 2.0 to 3.0 which showcases there are poorly rated teachers within the school. Lastly, this is a proper left skewed graph.
+
+### Part B
+
+```{r}
+ggplot(profs) + geom_boxplot(aes(x = native, y = eval)) + labs(x="Native Speaker",title = "Distribution of Course Evaluation Scores by Native Speaker", y = "Course Evaluation Scores")
+```
+
+**Caption**: The two graphs represents the relationship between how a native and a non-native speaker affect course evaluations.
+
+**Summary**: Through the graph we can see that native speakers have a higher median than the non-native speakers on the course evaluation score. There are five outliers shown through the native speakers box plot. Lastly the Q4 (maximum) for native speakers has a 5/5 rating while non-native speakers do not reach the coveted perfect score.
+
+### Part C
+
+```{r}
+ggplot(profs) + 
+  geom_histogram(aes(x=eval), binwidth=0.1) + 
+  facet_wrap(~gender) + labs(x="Course Evaluation Scores", y = "Frequency")
+```
+
+**Caption**: The two graphs represents the relationship of how the genders (male/female) affect course evaluations.
+
+**Summary**: Through the graph we can see that they both are mainly left skewed. There is more frequency/scores on the male side compared to the female side which showcases that there are more male teachers. Lastly, we can see that in both graphs that the outlier is within the 2-2.5 range, which showcases most of the data is from the 3.25-5 range.
+
+### Part D
+
+```{r}
+ggplot(profs) + 
+  geom_point(aes(x=beauty, y=eval)) + labs(x="Physical Attractiveness Score", y = "Course Evaluation Scores")
+
+```
+
+```{r include=FALSE}
+cor(profs$beauty,profs$eval)
+```
+
+**Caption**: The graph represents the relationship of how physical affects course evaluations.
+
+**Summary**: Through the graph we can see that there is no definitive skew and the correlation coefficient is 0.189. We can see it is a weak correlation and no specific pattern we can see through the data. Lastly, there is no clear outliers we can see throughout the graph which truly makes the data random.
+
+## Problem 2: Bike Sharing
+
+### Plot A
+
+```{r}
+average <- bikeshare |> 
+  group_by(hr) |>
+  summarize(averages = mean(total))
+
+
+
+ggplot(average) + geom_line(aes(x=hr, y=averages)) + labs(x="Hours of the Day", y = "Average hourly bike rentals", title = "Relationship between Average Hourly Bike Rentals and the Hours of the Day")
+
+
+```
+
+This plot shows the relationship between the average number of hourly bike rentals (y-axis) and the time of day in hours (x-axis). The data shows that there two clear peaks in bike rentals, one around 8:00 AM and another larger peak around 5:00 PM. These peaks represent that most bike rentals happen during commuting hours, likely when people travel to and from work. There is a low point in rentals during the early morning hours (around 3:00–5:00 AM), and activity gradually decreases again after 8:00 PM. The key takeaway is that bike rentals are strongly correlated with commuter behavior, showing maximum usage during morning and evening rush hours.
+
+### Plot B
+
+```{r}
+bikeshares <- bikeshare |> 
+  group_by(hr, workingday) |>
+  mutate(average3 = mean(total))
+
+
+
+
+ggplot(bikeshares, aes(x=hr, y=average3)) + geom_line(bins=1) + facet_wrap(~workingday) + labs(x="Hours of the Day", y = "Average hourly bike rentals", title = "Non-Workday vs Workday Relationship between Rentals and Hours of the Day")
+
+```
+
+This plot shows the relationship between bike rentals and the hours of the day, comparing workdays (labeled as "1") and non-workdays (labeled as "0"). The x-axis represents the hours of the day, ranging from midnight (0) to 11 PM (23), while the y-axis represents the average number of bike rentals per hour. In the left panel (non-workdays), bike rentals increase gradually in the morning, peaking in the late morning and early evening. This shows that people rent bikes more for leisure or afternoon activities rather than commuting. In the right panel (workdays), there are two distinct peaks one that is at 8 AM and another around 5-6 PM. People are likely using bikes to travel to and from work during typical commuting hours. The key takeaway is that they both have the exact
+
+### Plot C
+
+```{r}
+
+filters <- bikeshare |>
+  filter(hr == 9)
+
+
+
+ggplot(filters, aes(x=weathersit, y=total)) + geom_bar(stat='identity') + facet_wrap(~workingday) + labs(x="Hours of the Day", y = "Average hourly bike rentals", title = "Non-Workday vs Workday Relationship between Rentals and Hours of the Day")
+```
+
+This plot examines the relationship between weather conditions and average hourly bike rentals on non-workdays (panel labeled "0") and workdays (panel labeled "1"). The x-axis represents different weather situations: (1) clear or partly cloudy, (2) mist or cloudy conditions, and (3) light snow or rain with thunderstorms. The y-axis shows the average number of hourly bike rentals, with higher values indicating greater ridership. On both workdays and non-workdays, bike rentals are highest in clear weather and decrease as weather conditions worsen. The key takeaway is that poor weather significantly reduces bike usage, but this effect is more noticeable on non-workdays, suggesting that people may be more willing to bike in bad weather when commuting for work than when biking for leisure.
+
+## Problem 3: Capital Metro UT Ridership
+
+```{r}
+capmetro_UT = mutate(capmetro_UT,
+day_of_week = factor(day_of_week,
+levels=c("Mon", "Tue", "Wed","Thu", "Fri", "Sat", "Sun")),
+month = factor(month,
+levels=c("Sep", "Oct","Nov")))
+
+
+```
+
+### Part 1
+
+```{r}
+capmetro_UT <- capmetro_UT |>
+  mutate(boardingavg = boarding *4)
+
+
+ggplot(capmetro_UT) +  
+  geom_line(aes(x=hour_of_day, y=boardingavg, color=month)) + facet_wrap(~day_of_week) + labs(x="Hour of the Day", y = "Average Boardings")
+```
+
+**Caption**: The figure shows the average Capital Metro UT ridership by hour of the day for each day of the week across September, October, and November, revealing consistent peak boarding times on weekdays, lower ridership on weekends, and drops in ridership due to semester start effects in September and Thanksgiving break in November.
+
+**Answers**: The x-axis represents the hour of the day, while the y-axis represents the average number of boardings. The hour of peak boardings remains broadly similar across weekdays, typically occurring between 12 PM and 6 PM, but weekends show significantly lower ridership throughout the day. Average boardings on Mondays in September appear lower compared to other days and months, possibly because the semester had just started, and fewer students were using public transportation. Additionally, boardings on Wednesday, Thursday, and Friday in November are lower than in other months, likely due to Thanksgiving break, when many students leave campus. Ridership patterns are more stable on weekdays, while weekends experience fewer total boardings, likely due to fewer students commuting to classes.
+
+### Part 2
+
+```{r}
+ggplot(capmetro_UT) +  
+  geom_point(aes(x=temperature, y=boarding, color=month)) + facet_wrap(~weekend) + labs(x="Temperature", y = "Average Boardings")
+```
+
+**Caption:** The figure displays the relationship between temperature and average Capital Metro UT boardings, separated by weekdays and weekends, across the months of September (red), October (green), and November (blue).
+
+**Answers:** I don't think there is a noticeable difference between tempature it seems the same regardless of weekday and weekend.
+
+## Problem 4: Wrangling the Billboard Top 100
+
+### Part A
+
+### Table of the Top 10 most popular songs since 1958
+
+```{r}
+billboard |>
+  group_by(song, performer) |>
+  summarize(count = n()) |>
+  ungroup() |>
+  slice_max(n = 10, count,)
+```
+
+### Part B
+
+```{r}
+diversity <- billboard |>
+  filter(year != 1958 & year != 2021) |>
+  group_by(year) |>
+  summarize(uniquesongs = n_distinct(song)) |>
+  ungroup()
+  
+ggplot(diversity) + geom_line(aes(x=year, y=uniquesongs)) + labs(x = "Year", y = "Unique Number of Songs")
+```
+
+**Caption**: Unique Number of Songs vs Year
+
+**Answer**: The figure shows the number of unique songs released each year from the 1950s to the 2020s. The number of unique songs was high in the 1960s but steadily declined, reaching its lowest point around the early 2000s. After that, the number started increasing rapidly, with a sharp rise in the 2010s and 2020s. This trend suggests a period of low musical diversity in the late 20th century, followed by a recent boom in unique songs.
+
+### Part C
+
+```{r}
+thirtysong <- billboard |>
+  filter(weeks_on_chart >= 10) |>
+  group_by(performer) |>
+  summarize(uniquesongs = n_distinct(song)) |>
+  ungroup()
+
+thirtysongs <- thirtysong |>
+  filter(uniquesongs >= 30)
+
+ggplot(thirtysongs, aes(x=performer, y=uniquesongs)) +  geom_bar(stat='identity') + coord_flip()
+
+```
+
+**Caption**: Number of Songs of Performers who over 30 songs that are over 10 weeks in the Billboard
+
+**Answer**: The figure displays a bar plot of 19 artists in U.S. musical history since 1958 who have had at least 30 songs that were "ten-week hits." Each bar represents the number of ten-week hits for a specific artist, with Elton John having the highest number, exceeding 50. Other artists such as Madonna, Michael Jackson, and Taylor Swift also have a significant number of long-running hits.
