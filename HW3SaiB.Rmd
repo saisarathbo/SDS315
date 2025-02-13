@@ -1,0 +1,389 @@
+---
+title: "HW3SaiB"
+author: "Saisarath Bolneni"
+date: "2025-02-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+library(mosaic)
+gasprices <- read_csv("gasprices.csv")
+sclass <- read_csv("sclass.csv")
+nbc <- read_csv("nbc_pilotsurvey.csv")
+ebay <- read.csv("ebay.csv")
+```
+
+<https://github.com/saisarathbo/Homework2>
+
+# Problem 1
+
+## Part A
+
+```{r echo=FALSE}
+boot_competition = do(10000)*diffmean(Price~Competitors, data=resample(gasprices))
+```
+
+### **Claim**: Gas stations charge more if they lack direct competition in sight.
+
+\vspace*{2ex}
+
+### Evidence:
+
+\vspace*{2ex}
+
+```{r echo=FALSE}
+ggplot(gasprices, aes(x = Competitors, y = Price)) +
+  geom_boxplot() +
+  ggtitle("Price vs Competition") +
+  xlab("Competitors") +
+  ylab("Price")
+```
+
+\vspace*{2ex}
+
+##### Mean:
+
+```{r echo=FALSE}
+diffmean(gasprices$Price~gasprices$Competitors)
+```
+
+\vspace*{2ex}
+
+##### Bootstrap Confidence Intervals:
+
+```{r echo=FALSE}
+confint(boot_competition, level=0.95)
+```
+
+\vspace*{2ex}
+
+You can see through the data provided we can see that the difference between means for when there are competitors and when there are no competitors is (-0.02348235). Through the Bootstrap Process you can state that we are 95% confident that the mean interval is between -0.05478148 and 0.007725856. Through this evidence we can see that there is not enough evidence even though it's small to uphold the claim.
+
+### Conclusion: This theory is supported. Stations without competition do charge more, but the difference is very small since it is only 2 cents through the estimate. It’s not a huge factor in gas prices, but it does have some effect.
+
+\vspace*{2ex}
+
+## Part B
+
+```{r echo=FALSE}
+boot_rich = do(10000)*cor(Income~Price, data=resample(gasprices))
+```
+
+### **Claim**: The richer the area, the higher the gas prices.
+
+\vspace*{2ex}
+
+### Evidence:
+
+\vspace*{2ex}
+
+```{r echo=FALSE}
+ggplot(boot_rich) + geom_histogram(aes(x=cor))
+```
+
+\vspace*{2ex}
+
+##### Mean:
+
+```{r echo=FALSE}
+cor(gasprices$Price, gasprices$Income)
+```
+
+\vspace*{6ex}
+
+##### Bootstrap Confidence Intervals:
+
+```{r echo=FALSE}
+confint(boot_rich, level=0.95)
+```
+
+\vspace*{2ex}
+
+You can see through the data provided we can see that the correlation is about .396 which means there is a moderate positive correlation between high income and high price. Through the Bootstrap Process you can state that we are 95% confident that the correlation interval is between 0.1980718 and 0.5677715. Through this evidence we can see that there is evidence that there is a moderate correlation which proves that there is indeed a proper relationship between the income of the area and the price of the gas.
+
+### Conclusion: This theory is supported. There is a clear link between higher-income areas and higher gas prices. Richer neighborhoods tend to have more expensive gas.
+
+\vspace*{2ex}
+
+## Part C
+
+```{r echo=FALSE}
+boot_stoplight = do(10000)*diffmean(Price~Stoplight, data=resample(gasprices))
+```
+
+### **Claim**: Gas stations at stoplights charge more.
+
+\vspace*{2ex}
+
+### Evidence:
+
+\vspace*{2ex}
+
+```{r echo=FALSE}
+ggplot(gasprices, aes(x = Stoplight, y = Price)) +
+  geom_boxplot() +
+  ggtitle("Price vs Stoplight") +
+  xlab("Stoplight") +
+  ylab("Price")
+```
+
+\vspace*{2ex}
+
+##### Mean:
+
+```{r echo=FALSE}
+diffmean(gasprices$Price~gasprices$Stoplight)
+```
+
+\vspace*{2ex}
+
+##### Bootstrap Confidence Intervals:
+
+```{r echo=FALSE}
+confint(boot_stoplight, level=0.95)
+```
+
+\vspace*{2ex}
+
+You can see through the data provided we can see that the difference between means for when there is a spotlight and when there are no spotlights is (-0.003299916). Through the Bootstrap Process you can state that we are 95% confident that the mean interval is between -0.03774135 and 0.03059846. Through this evidence we can see that there is not enough evidence as it is too small to uphold the claim.
+
+### Conclusion: This theory is not supported. Gas prices at stoplights are almost the same as prices away from them. Being at a stoplight doesn’t seem to affect gas prices.
+
+\vspace*{2ex}
+
+## Part D
+
+```{r echo=FALSE}
+boot_highway = do(10000)*diffmean(Price~Highway, data=resample(gasprices))
+```
+
+### **Claim**: Gas stations with direct highway access charge more.
+
+\vspace*{2ex}
+
+### Evidence:
+
+\vspace*{2ex}
+
+```{r echo=FALSE}
+ggplot(gasprices, aes(x = Highway, y = Price)) +
+  geom_boxplot() +
+  ggtitle("Price vs Highway") +
+  xlab("Highway") +
+  ylab("Price")
+```
+
+\vspace*{2ex}
+
+##### Mean:
+
+```{r echo=FALSE}
+diffmean(gasprices$Price~gasprices$Highway)
+```
+
+\vspace*{6ex}
+
+##### Bootstrap Confidence Intervals:
+
+```{r echo=FALSE}
+confint(boot_highway, level=0.95)
+```
+
+\vspace*{2ex}
+
+You can see through the data provided we can see that the difference between means for when there is a highway and when there are no highway is (0.0456962). Through the Bootstrap Process you can state that we are 95% confident that the mean interval is between 0.009921059 and 0.08079731. Through this evidence we can see that there is enough evidence as the estimate is around .0457\$ which is enough to uphold the claim.
+
+### Conclusion: This theory is supported. Highway gas stations charge more than those away from the highway. People are willing to pay extra for the convenience.
+
+\vspace*{2ex}
+
+## Part E
+
+```{r echo=FALSE}
+gasprices$ShellComp <- ifelse(gasprices$Brand == "Shell", "Shell", "Other")
+boot_shell <- do(10000) * diffmean(Price ~ ShellComp,  data=resample(gasprices))
+```
+
+### **Claim**: Shell charges more than all other non-Shell brands
+
+\vspace*{2ex}
+
+### Evidence:
+
+\vspace*{2ex}
+
+```{r echo=FALSE}
+ggplot(gasprices, aes(x = Brand, y = Price)) +
+  geom_boxplot() +
+  ggtitle("Price vs Brand") +
+  xlab("Brand") +
+  ylab("Price")
+```
+
+\vspace*{2ex}
+
+##### Mean:
+
+```{r echo=FALSE}
+diffmean(gasprices$Price~gasprices$ShellComp)
+
+```
+
+\vspace*{6ex}
+
+##### Bootstrap Confidence Intervals:
+
+```{r echo=FALSE}
+confint(boot_shell, level=0.95)
+```
+
+\vspace*{2ex}
+
+You can see through the data provided we can see that the difference between means for when there it is a Shell and when it is not a Shell Brand is (0.02740421). Through the Bootstrap Process you can state that we are 95% confident that the mean interval is between -0.009317073 and 0.06440289 Through this evidence we can see that there is enough evidence as the estimate is around .0274\$ which is enough to uphold the claim.
+
+### Conclusion: This theory is supported. However, barely Since shell is one of the most expensive brands, but Chevron-Texaco is just as pricey. Through the data however when grouped with other brands Shell is clear at the top.
+
+# Problem 2
+
+## Part A
+
+```{r echo=FALSE}
+amg2011 <- sclass |> 
+  filter(year == 2011, trim == "63 AMG")
+
+boot_mileage <- do(10000) * mean(~ mileage, data = resample(amg2011))
+
+confint(boot_mileage, level = 0.95)
+```
+
+## Part B
+
+```{r echo=FALSE}
+s2014 <- sclass |>
+  filter(year == 2014, trim == "550") |>
+  mutate(isBlack = ifelse(color == "Black", TRUE, FALSE))
+
+boot_class <- do(10000) * prop(~ isBlack, data = resample(s2014))
+confint(boot_class, level = 0.95)
+```
+
+# Problem 3
+
+## Part A
+
+```{r echo=FALSE}
+nbcA <- nbc |>
+  filter(Show == "Living with Ed" | Show == "My Name is Earl")
+
+mean(nbcA$Q1_Happy~nbcA$Show)
+
+boot_nbcA <- do(10000) * diffmean(Q1_Happy ~ Show, data = resample(nbcA))
+confint(boot_nbcA)
+
+
+```
+
+**Question**: Do people feel happier watching "Living with Ed" or "My Name is Earl"?
+
+**Approach**: I filtered the dataset with the shows "Living with Ed" and "My Name is Earl" to get what the question was asking for. Next, I calculated the bootstrap method and obtained the 95% confidence interval of the difference of means.
+
+**Result**: The lower and upper of the confidence interval is -0.3931853 and 0.1058936, with an estimate of -0.1490515.
+
+**Conclusion**: People may feel slightly happier watching "Living with Ed" than "My Name is Earl," but the difference is small.
+
+## Part B
+
+```{r echo=FALSE}
+nbcB <- nbc |>
+  filter(Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+
+
+boot_nbcB <- do(10000) * diffmean(Q1_Annoyed ~ Show, data = resample(nbcB))
+confint(boot_nbcB)
+
+
+```
+
+**Question**: Do people feel more annoyed watching "The Biggest Loser" or "The Apprentice: Los Angeles"?
+
+**Approach**: I filtered the dataset with the shows "The Biggest Loser" and "The Apprentice: Los Angeles" to get what the question was asking for. Next, I calculated the bootstrap method and obtained the 95% confidence interval of the difference of means.
+
+**Result**: The lower and upper of the confidence interval is -0.5162087 and -0.01847798, with an estimate of -0.270997.
+
+**Conclusion**: "The Apprentice: Los Angeles" made people feel more annoyed than "The Biggest Loser" on average.
+
+## Part C
+
+```{r echo=FALSE}
+nbc_C <- nbc |>
+  filter(Show == "Dancing with the Stars") |>
+  mutate(confused = ifelse(Q2_Confusing >= 4, 1, 0))
+
+
+boot_nbcC <- do(10000) * prop(confused ~ 1, data = resample(nbc_C))
+confint(boot_nbcC)
+
+
+```
+
+**Question**: What proportion of people found "Dancing with the Stars" confusing?
+
+**Approach**: I filtered the dataset with the shows "Dancing with the Stars" and then mutated a variable just to get whether or not they agreed or they did not to get what the question was asking for. Next, I calculated the bootstrap method and obtained the 95% confidence interval of the difference of means.
+
+**Result**: The lower and upper of the confidence interval is 0.03867403 and 0.121547, with an estimate of 0.07734807.
+
+**Conclusion**: A small percentage of viewers found "Dancing with the Stars" confusing, but most did not.
+
+
+# Question 4
+
+```{r echo=FALSE}
+# Problem 4
+
+
+ebay <- read.csv("ebay.csv")
+
+ebay_data <- ebay %>%
+  mutate(revenue_ratio = rev_after / rev_before)
+
+
+obs_diff <- ebay_data |>
+  group_by(adwords_pause) |>
+  summarize(mean_ratio = mean(revenue_ratio)) |>
+  summarize(diff = mean_ratio[adwords_pause == 1] - mean_ratio[adwords_pause == 0]) %>%
+  pull(diff)
+
+boot_results <- do(10000) * {
+  resampled_data <- resample(ebay_data)
+  mean_treatment <- mean(resampled_data$revenue_ratio[resampled_data$adwords_pause == 1])
+  mean_control <- mean(resampled_data$revenue_ratio[resampled_data$adwords_pause == 0])
+  data.frame(diff = mean_treatment - mean_control)
+}
+
+# Compute 95% confidence interval
+ci <- quantile(boot_results$diff, c(0.025, 0.975))
+
+cat("Observed difference in revenue ratios:", obs_diff, "\n")
+cat("95% Confidence Interval:", ci[1], "to", ci[2], "\n")
+
+```
+Question: Does pausing Google AdWords impact eBay’s revenue ratio, and does the data suggest that paid search advertising generates additional revenue?
+
+Approach: To answer this, we calculated the revenue ratio for each location by dividing post-experiment revenue by pre-experiment revenue. We then compared the average revenue ratio between DMAs where ads were paused (treatment group) and those where ads remained active (control group). To determine whether this difference was statistically meaningful, we used bootstrapping with 10,000 resamples to generate a confidence interval for the difference in means.
+
+Results: The average revenue ratio in the treatment group was lower than in the control group, with a difference of -0.0523. The 95% confidence interval for this difference was -0.0910 to -0.0131.
+
+Conclusion: According to the findings, eBay's revenue ratio was impacted negatively by halting Google AdWords. This suggests that paid search advertisements do contribute to sustaining sales levels. Nevertheless, this study solely considers immediate revenue and ignores elements like cost effectiveness and client retention. Although it seems that keeping up AdWords spending helps maintain revenue, more research is required to ascertain whether the benefits outweigh the drawbacks.
+
+
+
+
+
+```
+
+
