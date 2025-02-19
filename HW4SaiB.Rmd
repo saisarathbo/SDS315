@@ -1,0 +1,140 @@
+---
+title: "HW4SaiB"
+author: "Saisarath Bolneni"
+date: "2025-02-19"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+library(mosaic)
+library(knitr)
+```
+
+<https://github.com/saisarathbo/SDS315>
+
+# Problem 1
+
+```{r echo=FALSE, results = "hide"}
+flagged_trades = do(100000)*nflip(n=2021, prob=0.024)
+sum(flagged_trades >= 70)
+
+```
+
+### **Writeup**:
+
+**Null Hypothesis**: Over the long run, securities trades from the Iron Bank are flagged at the same 2.4% baseline rate as that of other traders.
+
+**Test Statistic Used**: I utilized a p-value test in order to measure evidence against the null hypothesis.
+
+```{r echo=FALSE}
+ggplot(flagged_trades) + 
+  geom_histogram(aes(x=nflip), binwidth=1)
+```
+
+**P-Value**: 0.00193 which means that it is statistically significant.
+
+**Conclusion:** Through the p-value we can reject the null hypothesis meaning that there is a difference between the securities trade from Iron Bank and other banks.
+
+# Problem 2
+
+```{r, echo = FALSE, results = "hide"}
+restraunts = do(100000)*nflip(n=50, prob=0.03)
+sum(restraunts >= 8)
+```
+
+### **Writeup**:
+
+**Null Hypothesis**: On average, restaurants in the city are cited for health code violations at the same 3% baseline rate
+
+**Test Statistic Used**: I utilized a p-value test in order to measure evidence against the null hypothesis.
+
+```{r, echo = FALSE}
+ggplot(restraunts) + 
+  geom_histogram(aes(x=nflip), binwidth=1)
+```
+
+**P-Value**: 0.0001 which means that it is statistically significant.
+
+**Conclusion:** Through the p-value we can reject the null hypothesis meaning that Gourmet Bites’ rate of health code violations is significantly higher than the citywide average of 3%
+
+# Problem 3
+
+```{r echo=FALSE, message = FALSE}
+expected_distribution = c(Group1 = 0.30, Group2 = 0.25, Group3 = 0.20, Group4 = 0.15, Group5 = 0.10)
+observed_counts =  c(Group1 = 85, Group2 = 56, Group3 = 59, Group4 = 27, Group5 = 13)
+
+
+chi_square_test = chisq.test(x=observed_counts, p=expected_distribution)
+
+
+```
+
+I used a chi-square test to check if the jury selection is different from the county’s population. The null hypothesis (H₀) states that the distribution of empaneled jurors matches the county’s eligible jury pool. To test this, we calculate the chi-square statistic using the formula. where 𝑂 is the observed count of jurors and E is the expected count based on county proportions. Next, we compare the test statistic to a chi-square table to determine the p-value which is **0.01445**. Since the p-value is less than 0.05, we reject the null hypothesis, meaning the jury selection process is significantly different to the county’s population distribution. This could suggest systematic bias in jury selection, but other factors like random variation or peremptory challenges by attorneys could also explain the difference. To investigate further, we could analyze jury selections by other judges, study how attorneys use peremptory challenges, or examine whether certain groups are more likely to be excused from service.
+
+# Problem 4
+
+```{r echo=FALSE}
+text_samples <- readLines("brown_sentences.txt")
+letter_probs <- read.csv("letter_frequencies.csv")
+
+
+compute_chi_squared <- function(text, reference_table) {
+  cleaned_text <- gsub("[^A-Za-z]", "", text) 
+  cleaned_text <- toupper(cleaned_text) 
+  observed_freqs <- table(factor(strsplit(cleaned_text, "")[[1]], levels = reference_table$Letter))
+  total_chars <- sum(observed_freqs) 
+  
+
+  expected_freqs <- total_chars * reference_table$Probability
+  expected_freqs[expected_freqs == 0] <- 1 
+
+  chi_sq_value <- sum((observed_freqs - expected_freqs)^2 / expected_freqs)
+  return(chi_sq_value)
+}
+
+chi_sq_results <- sapply(text_samples, compute_chi_squared, reference_table = letter_probs)
+
+write.csv(chi_sq_results, "chi_squared_null_distribution.csv", row.names = FALSE)
+
+hist(chi_sq_results, breaks = 50)
+
+
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+chi_sq_null_dist <- read.csv("chi_squared_null_distribution.csv")
+
+
+sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+test_chi_sq <- sapply(sentences, compute_chi_squared, reference_table = letter_probs)
+
+p_vals <- sapply(test_chi_sq, function(stat) mean(chi_sq_null_dist >= stat))
+
+
+Chi_Squared_Stat = round(test_chi_sq, 3)
+P_Value = round(p_vals, 3)
+  
+df <- data.frame(P_Value = P_Value)
+
+kable(df, format = "markdown", col.names = c("Sentence", "P-Value"))
+
+```
+
+Writeup: The LLM sentence is Sentence 6 which is "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland." I know this because it had the lowest p-value and unusual words like "vexed."
