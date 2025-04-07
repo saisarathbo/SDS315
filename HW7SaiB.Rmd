@@ -1,0 +1,186 @@
+---
+title: "HW7SaiB"
+author: "Saisarath Bolneni"
+date: "2025-04-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic)
+library(knitr)
+armfold <- read_csv("armfold.csv")
+turnout <- read.csv("turnout.csv")
+```
+
+### **Question 1**:
+
+### **Part A**:
+
+The table represents the number of male and female students in the dataset. The next number represents the sample proportion of males who folded their left arm on top. The last number represents sample proportion of females who folded their left arm on top.
+
+```{r echo=FALSE}
+table(armfold$Sex)
+prop_male <- mean(armfold$LonR_fold[armfold$Sex == "Male"])
+prop_female <- mean(armfold$LonR_fold[armfold$Sex == "Female"])
+prop_male
+prop_female
+```
+
+### **Part B**:
+
+This is the observed difference in proportions between the two groups (males minus females)
+
+```{r echo=FALSE}
+diff_prop <- prop_male - prop_female
+diff_prop
+```
+
+### **Part C**:
+
+The formula for the standard error is the square root of ((proportionofmale*(1-*proportionofmale*)/sample of male) + (*proportionoffemale(1-proportionoffemale)/sample of female)
+
+Number used were standard error, z star value and difference of proportions.
+
+Z-Value is 1.96 as the conversion from the 95% confidence interval to Z-Value is this particular value! The first confidence interval is calculated using the built-in function. The second confidence interval is the hand-calculated value!
+
+```{r echo=FALSE}
+armfold$Sex <- factor(armfold$Sex, levels = c("Male", "Female"))
+
+
+prop.test(LonR_fold ~ Sex, data=armfold, success=1)
+
+n_male <- sum(armfold$Sex == "Male")
+n_female <- sum(armfold$Sex == "Female")
+
+se_diff <- sqrt(
+  (prop_male * (1 - prop_male)) / n_male +
+  (prop_female * (1 - prop_female)) / n_female
+)
+
+
+
+z_star <- 1.96
+ci_lower <- diff_prop - z_star * se_diff
+ci_upper <- diff_prop + z_star * se_diff
+c(ci_lower, ci_upper)
+```
+
+### **Part D**:
+
+If we were to repeat this study many times with different random samples of students from this university, then we would expect that about 95% of the resulting confidence intervals would contain the difference in proportions of females and males which would be in between -0.08 to 0.18 who fold their left arm on top.
+
+### **Part E**:
+
+The standard error tells us how much our observed difference might change if we repeated the study with a new sample. It basically measures the amount of random variation we’d expect just by chance. A small standard error means our result is probably close to the truth. A larger one means there’s more uncertainty.
+
+### **Part F**:
+
+The sampling distribution is the collection of all the differences in proportions we might get if we repeated the arm folding experiment many times with different random samples. What **varies** from sample to sample is the actual difference in proportions between females and males who fold their left arm on top. That number will go up and down a little each time because of random chance. What **stays fixed** is the true difference in the population
+
+### **Part G**:
+
+We can use a normal curve because we have large enough sample sizes for both groups. When sample sizes are big enough, the **Central Limit Theorem** says that the differences in proportions will follow a roughly normal shape. That means we can apply standard tools like z-scores and build confidence intervals.
+
+### **Part H**:
+
+**No**, we can't confidently say there's no sex difference in arm folding. The confidence interval includes zero, so it's possible there's no difference, but it also allows for a meaningful difference. So we can't say yes or no for sure—but we **cannot rule out** a sex difference.
+
+### **Part I**:
+
+Yes, the confidence interval would likely change if we repeated the experiment with a different group of students. Each random sample could give us a different difference in proportions, and that means the margin of error and the interval will shift. But over many repeated samples, about 95% of those intervals would contain the true difference.
+
+### **Question 2**:
+
+### **Part A**:
+
+The numbers represent the proportion of those receiving a GOTV call who voted in 1998, the sample proportion of those not receiving a GOTV call who voted in 1998 and a large-sample 95% confidence interval for the difference in these two proportions.
+
+```{r echo=FALSE}
+
+
+prop_yes <- mean(turnout$voted1998[turnout$GOTV_call == 1])
+prop_no  <- mean(turnout$voted1998[turnout$GOTV_call == 0])
+
+prop_yes
+prop_no
+
+
+turnout$GOTV_call <- factor(turnout$GOTV_call, levels = c(1, 0))
+prop.test(voted1998 ~ GOTV_call, data = turnout, success = 1)
+
+```
+
+### **Part B**:
+
+Comparing means of each confounder by GOTV group which shows theres a clear difference!
+
+```{r echo=FALSE}
+aggregate(cbind(voted1996, AGE, MAJORPTY) ~ GOTV_call, data = turnout, mean)
+
+```
+
+I checked if the variables voted1996, AGE, and MAJORPTY are confounders by examining the confidence intervals for the differences in proportions or means between those who received a GOTV call and those who did not. The confidence interval for voted1996 did not include zero, indicating that past voting behavior is significantly associated with both receiving a GOTV call and voting in 1998, making it a confounder. For AGE, we split it into younger and older groups, and the confidence interval for the difference in means between these groups also did not include zero, showing age is related to both the treatment and the outcome. Similarly, for MAJORPTY, the confidence interval for the difference in proportions between party registrants and non-registrants did not cross zero, confirming party affiliation as another confounder. In each case, the fact that the confidence intervals do not include zero suggests that these variables influence both the treatment and the outcome.
+
+```{r echo=FALSE}
+prop.test(voted1996 ~ GOTV_call, data = turnout, success = 1)
+prop.test(MAJORPTY ~ GOTV_call, data = turnout, success = 1)
+t.test(AGE ~ GOTV_call, data = turnout)
+
+```
+
+### **Part C**:
+
+After matching the data based on the confounders voted1996, AGE, and MAJORPTY, the confidence intervals for the differences in these variables now include zero, indicating that these confounders are balanced across the GOTV and non-GOTV groups. This balance suggests that the matching process effectively adjusted for the potential bias caused by these variables. By removing their influence, we can now more accurately assess the true impact of the GOTV call. The 95% confidence interval for the difference in voting proportions between those who received a GOTV call and those who did not still does not include zero. This non-zero confidence interval shows that the GOTV call had a real and statistically significant effect on the likelihood of voting in 1998.
+
+```{r echo=FALSE}
+library(MatchIt)
+
+gotv_match <- matchit(GOTV_call ~ voted1996 + AGE + MAJORPTY, data = turnout, method = "nearest", ratio = 5)
+
+
+matched_data <- match.data(gotv_match)
+
+conf_diff_matched <- function(var) {
+  group1 <- matched_data[[var]][matched_data$GOTV_call == 1]
+  group0 <- matched_data[[var]][matched_data$GOTV_call == 0]
+  
+  m1 <- mean(group1)
+  m0 <- mean(group0)
+  diff <- m1 - m0
+  se <- sqrt(var(group1)/length(group1) + var(group0)/length(group0))
+  ci_lower <- diff - 1.96 * se
+  ci_upper <- diff + 1.96 * se
+  
+  cat(paste("Difference in", var, "(matched GOTV - no GOTV):", round(diff, 4), "\n"))
+  cat("95% CI:", round(ci_lower, 4), "to", round(ci_upper, 4), "\n\n")
+}
+
+
+conf_diff_matched("voted1996")
+conf_diff_matched("AGE")
+conf_diff_matched("MAJORPTY")
+
+
+prop_yes_m <- mean(matched_data$voted1998[matched_data$GOTV_call == 1])
+prop_no_m  <- mean(matched_data$voted1998[matched_data$GOTV_call == 0])
+diff_m <- prop_yes_m - prop_no_m
+
+# Sample sizes
+n1 <- sum(matched_data$GOTV_call == 1)
+n0 <- sum(matched_data$GOTV_call == 0)
+
+# Standard error
+se_m <- sqrt((prop_yes_m * (1 - prop_yes_m)) / n1 + (prop_no_m * (1 - prop_no_m)) / n0)
+
+# 95% CI
+ci_lower2 <- diff_m - 1.96 * se_m
+ci_upper2 <- diff_m + 1.96 * se_m
+
+ci_lower2
+ci_upper2
+
+```
