@@ -1,0 +1,98 @@
+---
+title: "HW8SaiB"
+author: "Saisarath Bolneni"
+date: "2025-04-14"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic)
+library(knitr)
+creatine <- read_csv("creatinine.csv")
+covid <- read_csv("covid.csv")
+milk <- read_csv("milk.csv")
+options(warn=-1)
+```
+
+### **Question 1**:
+
+### **Part A**:
+
+I fit a linear regression model with creatinine clearance rate as the response and age as the predictor using `lm(creatclear ~ age)`. Then I used the equation from the model, which was y = -0.6198x + 147.8129 and was able to obtain 113.72 ml/minute which rounds up to 140.
+
+```{r echo=FALSE, include=FALSE}
+regression = lm(creatclear~age, data = creatine)
+
+regression
+
+predict(regression, data.frame(age = 55)) 
+```
+
+### **Part B**:
+
+Utilizing that same predictor I can find the creatinine clearance rate change with age through the age coefficient which was -0.6198.
+
+### **Part C**:
+
+After conducting a linear regression model, we can conclude that the 60-year old with a rate of 112 is healthier than the 40-year old. We can say this because the predicted of the 60-year old is 110.624 which is close to the expected of 112 compared to the 40-year old which has a difference from 135 and 123.02. I utilized the same equation as before in order to find the predicted values (y = -0.6198x + 147.8129)
+
+```{r echo=FALSE, include=FALSE}
+predict(regression, data.frame(age = 40))  
+predict(regression, data.frame(age = 60))  
+```
+
+### **Question 2**:
+
+1.  The estimated growth rate for Italy is 0.183 and the doubling time is approximately 3.8 days since first death. The 95% bootstrapped confidence interval for the growth rate is [0.1623227, 0.2041133]. While the 95% bootstrapped confidence interval for the doubling time is [3.395895, 4.270180].
+2.  The estimated growth rate for Spain is 0.276 and the doubling time is approximately 2.5 days since first death. The 95% bootstrapped confidence interval for the growth rate is [0.2369611, 0.3155283]. While the 95% bootstrapped confidence interval for the doubling time is [2.196783, 2.925151].
+3.  
+
+```{r echo=FALSE, include=FALSE}
+
+italy <- subset(covid, country == "Italy")
+spain <- subset(covid, country == "Spain")
+
+lm_italy = lm(log(deaths) ~ days_since_first_death, data=italy)
+lm_spain = lm(log(deaths) ~ days_since_first_death, data=spain)
+
+
+coef(lm_italy)
+coef(lm_spain)
+
+confint(lm_italy, "days_since_first_death")
+confint(lm_spain, "days_since_first_death")
+
+doubled_italy = log(2)/coef(lm_italy)[2]
+doubled_spain = log(2)/coef(lm_spain)[2]
+
+italy_doubling_ci = log(2) / rev(confint(lm_italy, "days_since_first_death"))
+spain_doubling_ci = log(2) / rev(confint(lm_spain, "days_since_first_death"))
+
+
+doubled_italy
+doubled_spain
+italy_doubling_ci
+spain_doubling_ci
+```
+
+```{r echo=FALSE, out.width="55%"}
+ggplot(covid, aes(x = days_since_first_death, y = deaths, color = country)) +
+  geom_line(size = 1.2) +
+  labs(
+    title = "Reported COVID-19 Daily Deaths Over Time",
+    x = "Days Since First Death",
+    y = "Daily Deaths",
+    color = "Country")
+```
+
+### **Question 3**:
+
+Utilizing the linear regression function within R and performing the function lm(log(sales) \~ log(price), data=milk) allowed me to obtain the estimated price elasticity of demand was -1.6186, meaning a 1% increase in price leads to a 1.62% decrease in quantity sold. The 95% confidence interval for the elasticity was [-1.78, -1.46], which indicates demand is elastic (since the interval is fully below -1).
+
+```{r echo=FALSE, include=FALSE}
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+coef(lm_milk)
+confint(lm_milk, "log(price)")
+```
